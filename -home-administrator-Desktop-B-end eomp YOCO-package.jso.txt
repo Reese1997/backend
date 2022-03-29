@@ -1,0 +1,2 @@
+/home/administrator/Desktop/B-end eomp YOCO/package.json
+/home/administrator/Desktop/B-end eomp YOCO/package-lock.json
