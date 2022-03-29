@@ -16,6 +16,10 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/:id", getProduct, (req, res) =>{
+  res.send(req.product);
+});
+
 // GET one post
 router.get("/:id", getProduct, (req, res) => {
   res.send(res.product);
@@ -49,11 +53,12 @@ router.put("/:id", getProduct, async (req, res, next) => {
     res
       .status(400)
       .json({ message: "You do not have the permission to update products" });
-  const { title, description, category, price } = req.body;
+  const { title, category, description, price, author } = req.body;
   if (title) res.product.title = title;
-  if (description) res.product.description = description;
   if (category) res.product.category = category;
+  if (description) res.product.description = description;
   if (price) res.product.price = price;
+  if (author) res.product.title = author;
 
   try {
     const updatedProduct = await res.product.save();

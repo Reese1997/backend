@@ -1,76 +1,82 @@
 
 const express = require("express");
-const Product = require("../models/product");
-const auth = require("../middleware/auth");
-const { getProduct } = require("../middleware/finders");
-
 const router = express.Router();
+const auth = require("../middleware/auth");
+const Cart = require("../models/cart");
+var ObjectId = require('mongodb').ObjectId;
 
-// GET all posts
-router.get("/", auth, async (req, res) => {
+
+const { getUser, getProduct } = require("../middleware/finders");
+
+//getting all items in cart
+router.get("/", auth, async (req, res, next) => {
   try {
-    const products = await Product.find();
-    return res.status(201).send(products);
+    const cart = await Cart.find({ user_id: { $regex: req.user._id } });
+    res.status(201).json(cart);
   } catch (error) {
-    return res.status(500).send({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 
-// GET one post
-router.get("/:id", [auth, getProduct], (req, res, next) => {
-  res.send(res.product);
-});
+//Adds a new item to the users cart
+router.post("/:id", [auth, getProduct], async (req, res, next) => {
 
-// CREATE a product
-router.post("/", auth, async (req, res, next) => {
-  const { title, category,description, img, price } = req.body;
+  // console.log(user)
+  let product_id = res.product._id;
+  let title = res.product.title;
+  let category = res.product.category;
+  let description = res.product.description
+  let img = res.product.img;
+  let price = res.product.price;
+  let quantity = req.body;
+  let user_id = req.user._id;
+  const carts = new Cart({
 
-  let product = new Product({
-    title,
-    category,
-    description,
-    img,
-    price
+     product_id,
+   title,
+   category,
+   description,
+   img,
+   price ,
+   quantity,
+   user_id,
   })
-
-  console.log(product)
-
   try {
-    const newProduct = await product.save();
-    res.status(201).json(newProduct);
+    carts.cart.push({
+    
+      product_id,
+      title,
+      category,
+      description,
+      img,
+      price,
+      quantity,
+
+    });
+    const updatedCart = await carts.save();
+    res.status(201).json(updatedCart);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json(console.log(error));
   }
 });
 
-// UPDATE a post
-router.put("/:id", [auth, getProduct], async (req, res, next) => {
-  if (req.user._id !== res.product.author)
-    res
-      .status(400)
-      .json({ message: "You do not have the permission to update products" });
-  const { title, body, img } = req.body;
-  if (title) res.product.title = title;
-  if (body) res.product.body = body;
-  if (img) res.product.img = img;
+
+//Delete single cart
+router.delete('/single', auth, async(req, res, next)=>{
 
   try {
-    const updatedProduct = await res.product.save();
-    res.status(201).send(updatedProduct);
+    const id = req.body
+    const cart = await Cart.findByIdAndDelete({_id : ObjectId(id)});
+    res.json({ message: "Deleted cart" });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
-});
-
-// DELETE a post
-router.delete("/:id", [auth, getProduct], async (req, res, next) => {
-  if (req.user._id !== res.product.author)
-    res
-      .status(400)
-      .json({ message: "You do not have the permission to delete products" });
+})
+//clears the user cart
+router.delete("/", auth, async (req, res, next) => {
   try {
-    await res.product.remove();
-    res.json({ message: "Deleted product" });
+    const cart = await Cart.deleteMany({ user_id: { $regex: req.user._id } });
+    res.json({ message: "Deleted cart" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

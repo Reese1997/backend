@@ -6,6 +6,9 @@ const cors = require("cors");
 
 const productRouter = require("./routes/productRouter")
 const userRouter = require("./routes/user");
+const userCart = require("./routes/cartRouter");
+
+
 
 // Setting up MongoDB connection
 mongoose.connect(process.env.DB_URL, { useNewUrlParser: true });
@@ -148,7 +151,7 @@ app.get("/", (req, res, next) => {
 });
 app.use("/users", userRouter);
 app.use("/products", productRouter);
-
+app.use("/cart", userCart)
 app.listen(app.get("port"), () => {
   console.info(`Server listen on port ${app.get("port")}`);
   console.info("Press CTRL + C to close the server");
